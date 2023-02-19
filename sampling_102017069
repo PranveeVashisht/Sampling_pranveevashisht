@@ -1,0 +1,246 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOs6Oo3YBYKb8vOSSusW99v",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/PranveeVashisht/Sampling_pranveevashisht/blob/main/sampling_102017069\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "pSJ7VQa21sI0"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from imblearn.over_sampling import SMOTE\n",
+        "from sklearn.tree import DecisionTreeClassifier\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.svm import SVC\n",
+        "from xgboost import XGBClassifier"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "try:\n",
+        "    data = pd.read_csv(\"Creditcard_data.csv\")\n",
+        "except FileNotFoundError:\n",
+        "    print(\"Dataset file not found.\")\n",
+        "    exit()\n",
+        "except Exception as e:\n",
+        "    print(f\"Error loading dataset: {e}\")\n",
+        "    exit()\n",
+        "\n",
+        "# Check if 'Class' column is present in the dataset\n",
+        "if 'Class' not in data.columns:\n",
+        "    print(\"Column 'Class' not found in the dataset.\")\n",
+        "    exit()"
+      ],
+      "metadata": {
+        "id": "esUDK5Ot283a"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X = data.drop('Class', axis=1)\n",
+        "y = data['Class']"
+      ],
+      "metadata": {
+        "id": "GjQPdVei5Ajk"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "num_samples = 5\n"
+      ],
+      "metadata": {
+        "id": "3wiqjiyi5FIV"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sample_sizes = [\n",
+        "    184, # sample size for Sample 1\n",
+        "    369, # sample size for Sample 2\n",
+        "    553, # sample size for Sample 3\n",
+        "    738, # sample size for Sample 4\n",
+        "    922  # sample size for Sample 5\n",
+        "]"
+      ],
+      "metadata": {
+        "id": "z-czIh-55I57"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "results = []"
+      ],
+      "metadata": {
+        "id": "Evi730jcErns"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "samples = []\n",
+        "for i in range(num_samples):\n",
+        "    X_resampled, y_resampled = SMOTE(sampling_strategy='minority').fit_resample(X, y)\n",
+        "    X_sample, _, y_sample, _ = train_test_split(X_resampled, y_resampled, test_size=1-sample_sizes[i]/len(X_resampled), random_state=42)\n",
+        "    samples.append((X_sample, y_sample))"
+      ],
+      "metadata": {
+        "id": "p0aZAmpn5LoG"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "models = [\n",
+        "    ('M1', DecisionTreeClassifier(random_state=42)),\n",
+        "    ('M2', RandomForestClassifier(random_state=42)),\n",
+        "    ('M3', LogisticRegression(random_state=42)),\n",
+        "    ('M4', SVC(random_state=42)),\n",
+        "    ('M5', XGBClassifier(random_state=42))\n",
+        "]"
+      ],
+      "metadata": {
+        "id": "zYWggX1a5Op1"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "for i in range(num_samples):\n",
+        "    # Create a dictionary to store the results for this sample\n",
+        "    sample_results = {'Sample': f'Sample {i+1}'}\n",
+        "    \n",
+        "    for name, model in models:\n",
+        "        X_sample, y_sample = SMOTE(sampling_strategy='minority').fit_resample(X, y)\n",
+        "        X_resampled, _, y_resampled, _ = train_test_split(X_sample, y_sample, test_size=1-sample_sizes[i]/len(X_sample), random_state=42)\n",
+        "        model.fit(X_resampled, y_resampled)\n",
+        "        score = model.score(X_resampled, y_resampled)\n",
+        "        sample_results[name] = score\n",
+        "        \n",
+        "    results.append(sample_results)\n",
+        "\n",
+        "# Convert the results to a DataFrame and display it\n",
+        "results_df = pd.DataFrame(results)\n",
+        "print(results_df)\n",
+        "\n",
+        "\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "r_6O-mWw5QoH",
+        "outputId": "6a554a00-1e09-43eb-a29c-c83e35ba5732"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.8/dist-packages/sklearn/linear_model/_logistic.py:814: ConvergenceWarning: lbfgs failed to converge (status=1):\n",
+            "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.\n",
+            "\n",
+            "Increase the number of iterations (max_iter) or scale the data as shown in:\n",
+            "    https://scikit-learn.org/stable/modules/preprocessing.html\n",
+            "Please also refer to the documentation for alternative solver options:\n",
+            "    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression\n",
+            "  n_iter_i = _check_optimize_result(\n",
+            "/usr/local/lib/python3.8/dist-packages/sklearn/linear_model/_logistic.py:814: ConvergenceWarning: lbfgs failed to converge (status=1):\n",
+            "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.\n",
+            "\n",
+            "Increase the number of iterations (max_iter) or scale the data as shown in:\n",
+            "    https://scikit-learn.org/stable/modules/preprocessing.html\n",
+            "Please also refer to the documentation for alternative solver options:\n",
+            "    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression\n",
+            "  n_iter_i = _check_optimize_result(\n",
+            "/usr/local/lib/python3.8/dist-packages/sklearn/linear_model/_logistic.py:814: ConvergenceWarning: lbfgs failed to converge (status=1):\n",
+            "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.\n",
+            "\n",
+            "Increase the number of iterations (max_iter) or scale the data as shown in:\n",
+            "    https://scikit-learn.org/stable/modules/preprocessing.html\n",
+            "Please also refer to the documentation for alternative solver options:\n",
+            "    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression\n",
+            "  n_iter_i = _check_optimize_result(\n",
+            "/usr/local/lib/python3.8/dist-packages/sklearn/linear_model/_logistic.py:814: ConvergenceWarning: lbfgs failed to converge (status=1):\n",
+            "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.\n",
+            "\n",
+            "Increase the number of iterations (max_iter) or scale the data as shown in:\n",
+            "    https://scikit-learn.org/stable/modules/preprocessing.html\n",
+            "Please also refer to the documentation for alternative solver options:\n",
+            "    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression\n",
+            "  n_iter_i = _check_optimize_result(\n",
+            "/usr/local/lib/python3.8/dist-packages/sklearn/linear_model/_logistic.py:814: ConvergenceWarning: lbfgs failed to converge (status=1):\n",
+            "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.\n",
+            "\n",
+            "Increase the number of iterations (max_iter) or scale the data as shown in:\n",
+            "    https://scikit-learn.org/stable/modules/preprocessing.html\n",
+            "Please also refer to the documentation for alternative solver options:\n",
+            "    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression\n",
+            "  n_iter_i = _check_optimize_result(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "     Sample   M1   M2        M3        M4   M5\n",
+            "0  Sample 1  1.0  1.0  0.972826  0.652174  1.0\n",
+            "1  Sample 2  1.0  1.0  0.951220  0.680217  1.0\n",
+            "2  Sample 3  1.0  1.0  0.929348  0.682971  1.0\n",
+            "3  Sample 4  1.0  1.0  0.929444  0.687924  1.0\n",
+            "4  Sample 5  1.0  1.0  0.919740  0.683297  1.0\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
